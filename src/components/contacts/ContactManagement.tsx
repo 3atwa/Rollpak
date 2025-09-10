@@ -21,7 +21,8 @@ import {
   Tabs,
   Tab,
   Card,
-  CardContent
+  CardContent,
+  Chip
 } from '@mui/material';
 import { Add, Delete, Edit, Upload, CloudUpload } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
@@ -70,6 +71,7 @@ const ContactManagement: React.FC = () => {
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [contactTags, setContactTags] = useState('');
 
   // Import state
   const [importedContacts, setImportedContacts] = useState<any[]>([]);
@@ -112,6 +114,7 @@ const ContactManagement: React.FC = () => {
     setContactName('');
     setContactEmail('');
     setContactPhone('');
+    setContactTags('');
     setOpenContactDialog(true);
   };
 
@@ -120,6 +123,7 @@ const ContactManagement: React.FC = () => {
     setContactName(contact.name);
     setContactEmail(contact.email || '');
     setContactPhone(contact.phone || '');
+    setContactTags(contact.tags ? contact.tags.join(', ') : '');
     setOpenContactDialog(true);
   };
 
@@ -147,7 +151,8 @@ const ContactManagement: React.FC = () => {
         name: contactName.trim(),
         email: contactEmail.trim() || null,
         phone: contactPhone.trim() || null,
-        created_by: user?.id
+        user_id: user?.id,
+        tags: contactTags.trim() ? contactTags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
       };
 
       let result;
@@ -283,8 +288,14 @@ const ContactManagement: React.FC = () => {
         const name = item.name || item.Name || item.NAME || item.contact || item.Contact || '';
         const email = item.email || item.Email || item.EMAIL || '';
         const phone = item.phone || item.Phone || item.PHONE || item.mobile || item.Mobile || item.whatsapp || item.Whatsapp || '';
+        const tags = item.tags || item.Tags || item.TAGS || '';
         
-        return { name, email, phone };
+        return { 
+          name, 
+          email, 
+          phone, 
+          tags: tags ? tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : []
+        };
       }).filter(contact => contact.name && (contact.email || contact.phone));
 
       setImportedContacts(processedContacts);
@@ -318,7 +329,8 @@ const ContactManagement: React.FC = () => {
       
       const contactsWithUser = importedContacts.map(contact => ({
         ...contact,
-        created_by: user?.id
+        user_id: user?.id,
+        tags: [] // Initialize empty tags array
       }));
 
       const { error } = await supabase
@@ -390,6 +402,7 @@ const ContactManagement: React.FC = () => {
                     <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Phone</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Tags</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -399,6 +412,21 @@ const ContactManagement: React.FC = () => {
                       <TableCell>{contact.name}</TableCell>
                       <TableCell>{contact.email || '-'}</TableCell>
                       <TableCell>{contact.phone || '-'}</TableCell>
+                      <TableCell>
+                        {contact.tags && contact.tags.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {contact.tags.map((tag: string, index: number) => (
+                              <Chip
+                                key={index}
+                                label={tag}
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                              />
+                            ))}
+                          </Box>
+                        ) : '-'}
+                      </TableCell>
                       <TableCell>
                         <IconButton 
                           onClick={() => openEditContactDialog(contact)} 
@@ -485,6 +513,7 @@ const ContactManagement: React.FC = () => {
                           <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Phone</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Tags</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -493,6 +522,7 @@ const ContactManagement: React.FC = () => {
                             <TableCell>{contact.name}</TableCell>
                             <TableCell>{contact.email || '-'}</TableCell>
                             <TableCell>{contact.phone || '-'}</TableCell>
+                            <TableCell>{contact.tags ? contact.tags.join(', ') : '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -557,6 +587,15 @@ const ContactManagement: React.FC = () => {
             value={contactPhone}
             onChange={(e) => setContactPhone(e.target.value)}
             helperText="Include country code for WhatsApp (e.g., +1234567890)"
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Tags"
+            fullWidth
+            value={contactTags}
+            onChange={(e) => setContactTags(e.target.value)}
+            helperText="Separate multiple tags with commas (e.g., client, vip, newsletter)"
           />
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>

@@ -30,8 +30,9 @@ export type Contact = {
   name: string;
   email?: string;
   phone?: string;
+  tags: string[];
+  user_id: string;
   created_at: string;
-  created_by: string;
 }
 
 export type Message = {

@@ -162,29 +162,33 @@ const UserController: React.FC = () => {
         if (error) throw error;
         setSuccess('User updated successfully!');
       } else {
-        // Create new user using signup (exactly like signup logic)
+        // Create new user using admin API
         if (!formData.password) {
           setError('Password is required for new users');
           return;
         }
 
-        // Use the same signup logic as AuthContext
-        const { error: signupError } = await signUp(formData.email, formData.password);
-        
-        if (signupError) {
-          setError(`Error creating user: ${signupError.message}`);
+        // Use admin API to create user
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: formData.email,
+          password: formData.password,
+          email_confirm: true,
+          user_metadata: {
+            role: formData.role
+          }
+        });
+
+        if (authError) {
+          setError(`Error creating user: ${authError.message}`);
           return;
         }
 
-        // Get the newly created user from auth
-        const { data: { user: newUser } } = await supabase.auth.getUser();
-        
-        if (newUser) {
+        if (authData.user) {
           // Create user profile in users table
           const { error: profileError } = await supabase
             .from('users')
             .insert({
-              id: newUser.id,
+              id: authData.user.id,
               email: formData.email,
               role: formData.role,
               is_active: formData.isActive

@@ -61,7 +61,7 @@ const UserManagement: React.FC = () => {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('*')
         .order('created_at');
 
@@ -132,7 +132,7 @@ const UserManagement: React.FC = () => {
       if (editingUser) {
         // Update existing user role
         const { error } = await supabase
-          .from('profiles')
+          .from('users')
           .update({ role: userRole })
           .eq('id', editingUser.id);
 
